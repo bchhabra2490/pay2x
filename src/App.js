@@ -62,14 +62,39 @@ class DetailTable extends Component{
 }
 
 class ReviewForm extends Component{
+
+
+  submitForm(e){
+    e.preventDefault();
+
+    var productid = 1;
+    var rating = window.document.getElementById('rating').value;
+    var review = window.document.getElementById('review').value;
+    if(0<=rating<=5){
+      const url = 'https://internship-pay2x.herokuapp.com';
+      axios.post(url+'/api/post/reviews',{
+        productid:productid,
+        desc:review,
+        rating:rating
+      }).then(function(response){
+        console.log(response);
+        alert('Submitted');
+      }).catch(function(error){
+        console.log(error);
+      });
+    }else{
+      alert('Rating has to be 0 and 5.')
+    }
+  }
+
   render(){
     return(
-        <form className="col-xs-12 col-md-6 col-sm-6 col-lg-6 ">
+        <form className="col-xs-12 col-md-6 col-sm-6 col-lg-6" onSubmit = {this.submitForm.bind(this)}>
           <FormGroup>
-            <FormControl type="text" id="filter" placeholder = "Rating" style={{background:'black',color:'white'}}/>
+            <FormControl type="text" id="rating" placeholder = "Rating" style={{background:'black',color:'white'}}/>
           </FormGroup>
           <FormGroup>
-            <FormControl componentClass="textarea" placeholder="Write your review" style={{background:'black',color:'white'}} rows="10"/>
+            <FormControl componentClass="textarea" id="review" placeholder="Write your review" style={{background:'black',color:'white'}} rows="10"/>
           </FormGroup>
           <Button type="submit" className = "btn btn-primary">
             Submit
@@ -79,12 +104,33 @@ class ReviewForm extends Component{
   }
 }
 
+class CustomReview extends Component{
+  render(){
+    let reviewList = [];
+    this.props.reviews.map(function(review,i){
+      reviewList.push(<li key={i}>
+        <h5>Rating - {review.rating}/5</h5>
+        <p>Review:-{review.review}</p>
+      </li>)
+    });
+    return(
+      <div style={{overflowY:'scroll',maxHeight:200}}>
+        <ul style={{textAlign:'Left',listStyleType:'None'}}>
+          {reviewList}
+      </ul>
+    </div>
+    )
+  }
+}
+
 class App extends Component {
   constructor(){
     super();
     this.state = {
       products:{},
-      isLoading:true
+      isLoading:true,
+      reviews:[],
+      isreviews:true
     }
     const url = 'https://internship-pay2x.herokuapp.com';
     axios.get(url+'/api/products/1').then((response)=>{
@@ -96,6 +142,15 @@ class App extends Component {
     }).catch(function(error){
       console.log(error);
     })
+    axios.get(url+'/api/reviews/1').then((response)=>{
+      console.log(response.data.response[0])
+      this.setState({
+        reviews:response.data.response,
+        isreviews:false
+      })
+    }).catch(function(error){
+      console.log(error);
+    });
   }
   render() {
     return (
@@ -108,16 +163,9 @@ class App extends Component {
           <div style={{marginTop:20}} className="container">
             <hr/>
             <h4 style={{textAlign:'Left'}}>Customer Reviews</h4>
-            <div style={{overflowY:'scroll',maxHeight:200}}>
-              <ul style={{textAlign:'Left',listStyleType:'None'}}>
-                <li>
-                  <h4>Rating</h4>
-                  <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamc</p>
-                </li>
-              </ul>
-            </div>
+            {!this.state.isreviews && <CustomReview reviews = {this.state.reviews} />}
             <hr/>
-            <ReviewForm />
+            <ReviewForm/>
           </div>
         </div>
       </div>
